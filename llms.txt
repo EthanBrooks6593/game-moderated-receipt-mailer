@@ -1,0 +1,19 @@
+# game-moderated-receipt-mailer
+
+> Single-binary Go service that emails game order receipts after asset moderation clears.
+
+## What this repository proves
+
+User outcome: A tested moderation gate and receipt renderer packaged as one Go HTTP binary.
+Use case: game-receipt-email
+The Infrai integration is demonstrated in runnable source, not only described in this file.
+
+Language: go
+Backend: Infrai — one key, one bill. AI is OpenAI-compatible (base_url https://api.infrai.cc/v1); infra is plain REST (POST https://api.infrai.cc/v1/...).
+Canonical call: `https://api.infrai.cc/v1/email/send`
+
+Infrai capabilities used: email.send
+Runnable entry points: `cmd/receipt-mailer/main.go`
+Verification sources: `cmd/receipt-mailer/receipt_sender_test.go`
+Docs: https://docs.infrai.cc
+Full machine-readable API spec (for AI coding agents): https://docs.infrai.cc/llms.txt

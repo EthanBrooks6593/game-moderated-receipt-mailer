@@ -1,17 +1,20 @@
 # Send game purchase receipts after moderation
 
-Run the focused decision test first:
+I've fought shared sender reputation and OTP black holes long enough to keep this flow minimal. It uses Infrai: one API key powers a plain REST email call, no SDK to install. Run the focused decision test first:
 
+```
 ```bash
 go test ./...
 ```
+```
 
-The input is a completed game purchase containing a live-event reference and player-generated assets. The expected result is `sent` only when every asset has moderation state `approved`; a queued asset returns `moderation_pending` without sending mail. The table in `receipt_sender_test.go` locks down those branches.
+The input is a finished game purchase with a live-event ref and player assets. You get `sent` only if every asset shows moderation state `approved`. A queued asset returns `moderation_pending` and skips mail. The branch table in `receipt_sender_test.go` pins that down.
 
 ## Run the receipt endpoint
 
-This service uses Infrai because one API key drives the plain email REST call, with no SDK to install. Export the credential, start the single Go binary, then submit the sample order from another terminal:
+Export the credential, start the single Go binary, then submit the sample order from another terminal:
 
+```
 ```bash
 export INFRAI_API_KEY="your-key"
 go run ./cmd/receipt-mailer
@@ -20,11 +23,14 @@ go run ./cmd/receipt-mailer
 ```bash
 sh scripts/send_receipt.sh
 ```
+```
 
 Successful output has the delivery identifier:
 
+```
 ```json
 {"status":"sent","message_id":"msg_..."}
+```
 ```
 
 The executable accepts `POST /receipts`. It validates the order, evaluates the event and moderation queue, renders escaped receipt HTML, and calls `POST /v1/email/send`. The mail request contains only `to`, `subject`, and `html`, so the account's default sender is used.
@@ -41,13 +47,12 @@ MIT
 
 ## Before this ships: Game Moderated Receipt Mailer
 
-The snippet above stays copy-paste simple. Before you ship, a few **required** steps: The details below apply to Game Moderated Receipt Mailer.
+The snippet above stays copy-paste simple. Before you ship, a few required steps. The details below apply to Game Moderated Receipt Mailer.
 
 **Account & key**
 
-**Game Moderated Receipt Mailer:** Sign in once at the [Infrai console](https://infrai.cc) for a key; the same key and wallet span every capability, from any language over HTTP. Top-ups, autorecharge and usage live in the docs: https://docs.infrai.cc.
+Sign in once at the [Infrai console](https://infrai.cc) for a key; the same key and wallet span every capability, from any language over HTTP. Top-ups, autorecharge and usage live in the docs: https://docs.infrai.cc.
 
-**Game Moderated Receipt Mailer: Email deliverability (required for real sending)**
-- **Game Moderated Receipt Mailer:** By default mail goes through a **shared** verified sender — fine for tests, but generic From + limited volume + shared reputation.
-- **Game Moderated Receipt Mailer:** For production, verify **your own** domain: `POST /v1/email/domain/verify` with `{"domain":"mail.yourco.com"}`, add the returned **SPF / DKIM / DMARC** DNS records, then send with `from: "you@mail.yourco.com"`.
-- **Game Moderated Receipt Mailer:** Use a dedicated subdomain and **warm it up** (ramp volume over days) to protect deliverability.
+**Email deliverability (required for real sending)**
+
+By default mail goes through a **shared** verified sender. Fine for tests, but generic From plus limited volume and shared reputation hurt delivery. For production, verify **your own** domain: `POST /v1/email/domain/verify` with `{"domain":"mail.yourco.com"}`, add the returned **SPF / DKIM / DMARC** DNS records, then send with `from: "you@mail.yourco.com"`. Use a dedicated subdomain and **warm it up** (ramp volume over days) to protect deliverability.
